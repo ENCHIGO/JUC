@@ -19,24 +19,52 @@ import java.util.UUID;
 @Slf4j
 public class ProducerConsumer {
 
-
-
     static List<String> queues = Lists.newArrayList();
 
+    static volatile boolean full =false;
 
     public static void main(String [] args){
 
-        Thread producer = new Thread(()->{
+        Thread producer1 = new Thread(()->{
+                    while (true){
+                       synchronized (queues){
+                        if(!full){
+                            String s = UUID.randomUUID().toString();
+                            queues.add(s);
+                            System.out.println(Thread.currentThread().getName() + "---"+Thread.currentThread().getId()+"正在生产"+"第"+(queues.indexOf(s)+1)+"个"+s);
+                            if(queues.size()==10){
+                                full=true;
+                                queues.notifyAll();
+                            }
+                        }
+                        else {
+                            System.out.println(Thread.currentThread().getName() + "---"+Thread.currentThread().getId()+"没有东西可以被生产");
+                            try {
+                                queues.wait();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
 
-                while (true){
-                    //System.out.println(Thread.currentThread().getName()+"开始生产");
-                    synchronized (queues){
-                       // System.out.println(Thread.currentThread().getName()+"被唤醒");
-                    if(queues.size()<10){
-                        String uuid = UUID.randomUUID().toString();
-                        queues.add(uuid);
-                        System.out.println(Thread.currentThread().getName() + "---"+Thread.currentThread().getId()+"生产第"+queues.size()+"个" +uuid );
-                    }else {
+                    }
+
+                }
+        },"producer1");
+
+        Thread producer2 = new Thread(()->{
+            while (true){
+                synchronized (queues){
+                    if(!full){
+                        String s = UUID.randomUUID().toString();
+                        queues.add(s);
+                        System.out.println(Thread.currentThread().getName() + "---"+Thread.currentThread().getId()+"正在生产"+"第"+(queues.indexOf(s)+1)+"个"+s);
+                        if(queues.size()==10){
+                            full=true;
+                            queues.notifyAll();
+                        }
+                    }
+                    else {
+                        System.out.println(Thread.currentThread().getName() + "---"+Thread.currentThread().getId()+"没有东西可以被生产");
                         try {
                             queues.wait();
                         } catch (InterruptedException e) {
@@ -45,35 +73,40 @@ public class ProducerConsumer {
                     }
 
                 }
-            }
-        },"producer");
 
+            }
+        },"producer2");
 
         Thread consumer = new Thread(()->{
+                        while (true){
+                            synchronized (queues){
+                            if(!full){
+                                System.out.println(Thread.currentThread().getName() + "---"+Thread.currentThread().getId()+"没有东西可以被消费");
+                                try {
+                                    queues.wait();
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }else {
 
-                while (true){
-                    //System.out.println(Thread.currentThread().getName()+"开始消费");
-                    synchronized (queues){
-                        //System.out.println(Thread.currentThread().getName()+"被唤醒");
-                        if(CollectionUtils.isEmpty(queues)){
-                            System.out.println(Thread.currentThread().getName() + "---"+Thread.currentThread().getId()+"没有东西可以被消费");
-                            try {
-                                queues.wait();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
+                                String s = queues.get(0);
+                                System.out.println(Thread.currentThread().getName() + "---"+Thread.currentThread().getId()+"正在消费"+"第"+(queues.indexOf(s)+1)+"个"+s);
+                                queues.remove(0);
+                                if(queues.size()==0){
+                                    full = false;
+                                    queues.notifyAll();
+                                }
                             }
-                        }else {
-                        queues.forEach(s -> System.out.println(Thread.currentThread().getName() + "---"+Thread.currentThread().getId()+"正在消费"+"第"+(queues.indexOf(s)+1)+"个"+s));
-                        queues.clear();
-                        }
-                    queues.notifyAll();
-                }
-            }
-        },"consumer");
 
-        producer.start();
+                        }
+
+                }
+
+        },"consumer");
+        producer1.start();
+        producer2.start();
         try {
-            Thread.sleep(5);
+            Thread.sleep(0);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
