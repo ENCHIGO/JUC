@@ -1,7 +1,5 @@
 package com.enchigo.juc.learning;
 
-import java.util.logging.FileHandler;
-
 /**
  * @author enchigo
  * @version V1.0
@@ -42,6 +40,7 @@ public class VolatileTest implements Runnable {
 
         VolatileTest t1 = new VolatileTest();
         VolatileTest t2 = new VolatileTest();
+
         Thread thread1 = new Thread(t1,"线程1");
         Thread thread2 = new Thread(t2,"线程2");
 

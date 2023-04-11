@@ -13,11 +13,7 @@ import java.util.concurrent.CountDownLatch;
  *//*
 
 public class TestOOM {
-
-    public static void main(String[] args) {
-
-        for (int i = 0;; i++) {
-            System.out.println("i = " + i);
+/788451222222222589666666666666.println("i = " + i);
             new Thread(new fengjiaqi()).start();
         }
     }
